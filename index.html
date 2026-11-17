@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conteo semanal de consumibles — Pinto</title>
+<style>
+:root{--bg:#eef1f6;--card:#fff;--tx:#18212f;--mut:#6a7587;--bd:#e0e5ee;--ac:#2557d6;--acbg:#e8eefc;--ok:#16794c;--okbg:#e6f5ed;--wa:#b4570b;--wabg:#fff3e0}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx)}
+.wrap{max-width:640px;margin:0 auto;padding:0 12px 48px}
+header{background:linear-gradient(135deg,#1b3a8a,#2557d6);color:#fff;padding:14px 14px 12px;margin:0 -12px 12px;border-radius:0 0 18px 18px}
+header h1{font-size:18px;margin:0}
+header .sub{font-size:13px;opacity:.85;margin-top:2px}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.date{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:8px;padding:6px 8px;font:inherit;font-size:14px}
+.bar{height:8px;background:rgba(255,255,255,.25);border-radius:6px;margin-top:12px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:#7ee0a8;transition:width .25s}
+.prog{font-size:13px;margin-top:6px;opacity:.95}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px;box-shadow:0 1px 2px rgba(20,30,50,.05)}
+.scanrow{display:flex;gap:8px}
+#busca{flex:1;min-width:0;padding:13px 12px;font:inherit;border:2px solid var(--bd);border-radius:12px;background:#fff}
+#busca:focus{border-color:var(--ac);outline:none}
+.btn{padding:11px 14px;border-radius:12px;border:1px solid var(--bd);background:#fff;font:inherit;cursor:pointer;color:var(--tx)}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.btn.d{color:#b42318}
+.hint{font-size:13px;color:var(--mut);margin-top:6px}
+.cur{display:none;margin-top:12px;border-top:1px dashed var(--bd);padding-top:12px}
+.cur.on{display:block}
+.cur .nm{font-size:18px;font-weight:700}
+.cur .meta{margin:4px 0 10px;font-size:14px;color:var(--mut)}
+.cur .ent{display:flex;gap:8px;align-items:stretch}
+#qty{width:130px;padding:12px;font:inherit;font-size:30px;text-align:center;border:2px solid var(--ac);border-radius:12px;font-weight:700}
+#qty:focus{outline:none;box-shadow:0 0 0 3px var(--acbg)}
+.cur .ent .btn{flex:1;font-size:17px}
+.alert{margin-top:10px;padding:9px 11px;border-radius:10px;font-size:14px;background:var(--acbg);color:#183b99;display:none}
+.alert.on{display:block}
+.alert.w{background:var(--wabg);color:var(--wa)}
+.chips{display:flex;gap:8px;margin:2px 0 10px}
+.chip{padding:7px 14px;border-radius:20px;border:1px solid var(--bd);background:#fff;font:inherit;font-size:14px;cursor:pointer}
+.chip.on{background:var(--tx);color:#fff;border-color:var(--tx)}
+.it{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:7px;cursor:pointer}
+.it.sel{border-color:var(--ac);box-shadow:0 0 0 2px var(--acbg)}
+.it.pend{border-style:dashed;border-color:var(--ac)}
+.it .l{flex:1;min-width:0}
+.it .t{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.it .s{font-size:12.5px;color:var(--mut);margin-top:2px}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;background:#edf0f6;color:#4a5568;margin-right:6px;text-transform:uppercase;letter-spacing:.3px}
+.val{min-width:54px;text-align:center;padding:8px 6px;border-radius:10px;background:#f2f4f8;color:#9aa4b5;font-weight:700;font-size:18px}
+.it.done .val{background:var(--okbg);color:var(--ok)}
+.it.warn .val{background:var(--wabg);color:var(--wa)}
+.it.warn .s b{color:var(--wa)}
+h2{font-size:15px;margin:0 0 6px}
+ol{padding-left:18px;margin:4px 0 10px;font-size:14px;color:#3a4558}
+textarea{width:100%;height:100px;font:12px monospace;border:1px solid var(--bd);border-radius:8px;padding:6px;margin-top:8px}
+.hide{display:none!important}
+.igual{width:100%;margin-top:10px;background:var(--okbg);border-color:#bfe3cf;color:var(--ok);font-weight:600}
+.calc{margin-top:10px;border:1px solid var(--bd);border-radius:12px;padding:8px 12px;background:#fafbfd}
+.calc summary{cursor:pointer;font-size:14px;color:var(--ac);font-weight:600}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.g3 label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:4px}
+.g3 input{width:100%;padding:9px 6px;font:inherit;font-size:18px;text-align:center;border:2px solid var(--bd);border-radius:10px}
+.g3 input:focus{outline:none;border-color:var(--ac)}
+.cols{display:block}
+@media(min-width:900px){
+ .wrap{max-width:1120px}
+ header{border-radius:0 0 18px 18px;padding:18px 22px}
+ header h1{font-size:22px}
+ .cols{display:grid;grid-template-columns:400px 1fr;gap:18px;align-items:start}
+ aside{position:sticky;top:12px}
+ #lista{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #lista .it{margin-bottom:0}
+ .it:hover{border-color:#b9c7ee}
+}
+</style></head><body><div class="wrap">
+<header>
+ <div class="hrow"><div><h1>Conteo de consumibles</h1><div class="sub">Almacén de Pinto</div></div>
+ <input type="date" id="fecha" class="date"></div>
+ <div class="bar"><i id="pb"></i></div>
+ <div class="prog" id="prog"></div>
+</header>
+
+<div class="cols"><aside>
+<div class="panel">
+ <div class="scanrow">
+  <input type="text" id="busca" placeholder="Pica código o busca…" autocomplete="off" autocapitalize="off">
+  <button class="btn" id="tec" title="Mostrar/ocultar teclado">⌨</button>
+ </div>
+ <div class="hint">Con un lector, pica el código del consumible. Sin lector, toca el consumible en la lista.</div>
+ <div class="alert" id="ban"></div>
+ <div class="cur" id="cur">
+  <div class="nm" id="cnm"></div>
+  <div class="meta" id="cmeta"></div>
+  <div class="ent"><input type="text" id="qty" inputmode="numeric" pattern="[0-9]*" placeholder="0"><button class="btn p" id="ok">Guardar y siguiente</button></div>
+  <button class="btn igual" id="igual"></button>
+  <details class="calc" id="calc"><summary>Calcular por palets</summary>
+   <div class="g3">
+    <label>Palets completos<input type="text" inputmode="numeric" id="cpal" placeholder="0"></label>
+    <label>Cajas por palet<input type="text" inputmode="numeric" id="ccpp" placeholder="0"></label>
+    <label>Cajas sueltas<input type="text" inputmode="numeric" id="csue" placeholder="0"></label>
+   </div>
+   <div class="hint" id="cres"></div>
+  </details>
+  <div class="alert w" id="cwarn"></div>
+ </div>
+</div>
+
+<div class="exp panel">
+ <h2>Pasar el conteo a tu Excel</h2>
+ <ol>
+  <li>Pulsa <b>Copiar columna</b>.</li>
+  <li>En INVENTARIO PINTO, haz clic en la primera celda vacía de la fila 7 (a la derecha de la última fecha).</li>
+  <li>Pega. La fecha queda en la fila 7 y las cantidades en las filas 8 a 52.</li>
+ </ol>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button class="btn p" id="copia">Copiar columna</button>
+  <button class="btn hide" id="desc">Descargar CSV</button>
+  <button class="btn d" id="borra">Empezar conteo nuevo</button>
+ </div>
+ <div class="hint" id="msg"></div>
+ <details><summary class="hint">Si no se copia, selecciona el texto a mano</summary><textarea id="ta" readonly></textarea></details>
+ <div class="hint" id="ncod"></div>
+</div>
+</aside><section>
+<div class="chips"><button class="chip on" data-f="todos">Todos</button><button class="chip" data-f="faltan">Faltan</button><button class="chip" data-f="hechos">Contados</button></div>
+<div id="lista"></div>
+</section></div>
+</div>
+<script>
+const ITEMS=[{"id": 1, "row": 8, "n": "C8 TRANSFER", "u": "PALETS", "last": 0}, {"id": 2, "row": 9, "n": "C9 TRANSFER", "u": "PALETS", "last": 7}, {"id": 3, "row": 10, "n": "C10 TRANSFER", "u": "PALETS", "last": 28}, {"id": 4, "row": 11, "n": "C11 TRANSFER", "u": "PALETS", "last": 56}, {"id": 5, "row": 12, "n": "C13 TRANSFER", "u": "PALETS", "last": 42}, {"id": 6, "row": 13, "n": "C14 TRANSFER", "u": "PALETS", "last": 17}, {"id": 7, "row": 14, "n": "C15 TRANSFER", "u": "PALETS", "last": 13}, {"id": 8, "row": 15, "n": "C18 TRANSFER", "u": "PALETS", "last": 35}, {"id": 12, "row": 16, "n": "Sobre burbuja papel (cajas) (acolchados)", "u": "CAJAS", "last": 296}, {"id": 13, "row": 17, "n": "Sobre plastico 50x60 (cajas)-ordenadores", "u": "CAJAS", "last": 34}, {"id": 14, "row": 18, "n": "Packinglist (cajas)", "u": "CAJAS", "last": 92}, {"id": 15, "row": 19, "n": "Banda Engomada (pallet)", "u": "PALETS", "last": 2}, {"id": 16, "row": 20, "n": "Papel corrugado (pallet)", "u": "PALETS", "last": 2}, {"id": 17, "row": 21, "n": "Contenedor carton (pallet)(BOX)", "u": "PALETS", "last": 5}, {"id": 18, "row": 22, "n": "FILM Trasparente (pallets)", "u": "PALETS", "last": 9}, {"id": 19, "row": 23, "n": "Cinta transparente (cajas)", "u": "CAJAS", "last": 206}, {"id": 20, "row": 24, "n": "Folios (caja)", "u": "CAJAS", "last": 40}, {"id": 21, "row": 25, "n": "ZETES NORMALES 107X198 (caja) NO REMOVIBLES", "u": "CAJAS", "last": 7}, {"id": 22, "row": 26, "n": "ZETES CROSS 107X198 (caja) NO REMOVIBLES", "u": "CAJAS", "last": 12}, {"id": 23, "row": 27, "n": "ZETES ROJOS NORMALES 107X198 (cajas) NO REMOVIBLES", "u": "CAJAS", "last": 30}, {"id": 24, "row": 28, "n": "ZETES 50X50 (SEM) (cajas) -2 palets Getafe NO REMOVIBLES (NO PEDIR)", "u": "CAJAS", "last": 526}, {"id": 25, "row": 29, "n": "ZETES 50X50 (SEM) ROJO (cajas) NO REMOVIBLES", "u": "CAJAS", "last": 110}, {"id": 26, "row": 30, "n": "EMPAQUETADORA 102x204 mm (cajas) NO REMOVIBLES", "u": "CAJAS", "last": 64}, {"id": 27, "row": 31, "n": "EMPAQUETADORA MAQ QR 40 X 23 (cajas) NO REMOVIBLES", "u": "CAJAS", "last": 154}, {"id": 28, "row": 32, "n": "Planchas de carton 1200x800 (pallet)", "u": "PALETS", "last": 1}, {"id": 29, "row": 33, "n": "FILM CUBRE PALET NEGRO(rollos)", "u": "ROLLOS", "last": 15}, {"id": 30, "row": 34, "n": "FILM AUTOMATICO PARA FLEJ(palet)-sorter/Pinto (ANPER)", "u": "PALETS", "last": 0}, {"id": 31, "row": 35, "n": "FILM AUTOMATICO PARA FLEJ(palet) (Aranco)-SC/CROSS (ARANCO)", "u": "PALETS", "last": 3}, {"id": 32, "row": 36, "n": "cinta amarilla y negra (cajas)", "u": "CAJAS", "last": 10}, {"id": 33, "row": 37, "n": "cinta verde (cajas)", "u": "CAJAS", "last": 10}, {"id": 34, "row": 38, "n": "Cinta roja (cajas)", "u": "CAJAS", "last": 39}, {"id": 35, "row": 39, "n": "Cinta azul (cajas)", "u": "CAJAS", "last": 40}, {"id": 36, "row": 40, "n": "Cinta morada (cajas)", "u": "CAJAS", "last": 11}, {"id": 37, "row": 41, "n": "cinta amarilla (cajas)", "u": "CAJAS", "last": 20}, {"id": 38, "row": 42, "n": "Cinta naranja (cajas)", "u": "CAJAS", "last": 14}, {"id": 39, "row": 43, "n": "Cartón FANFOLD (Palets bases a 2 Palets) ONDA E EN USO", "u": "PALETS", "last": 91}, {"id": 40, "row": 44, "n": "Cartón FANFOLD (Palets bases a 2 Palets) SIN LOGO", "u": "PALETS", "last": 1}, {"id": 41, "row": 45, "n": "Bolsas cola para máquina (palet) con MM", "u": "SACOS", "last": 3}, {"id": 42, "row": 46, "n": "Cinta NSLU - ENFAJADORA(cajas)", "u": "CAJAS", "last": 14}, {"id": 43, "row": 47, "n": "FLEJE TV (caja)", "u": "CAJAS", "last": 17}, {"id": 44, "row": 48, "n": "FLEJE MM TV (palet)", "u": "PALETS", "last": 0}, {"id": 45, "row": 49, "n": "FILM PEQUEÑO (cajas)", "u": "CAJAS", "last": 52}, {"id": 46, "row": 50, "n": "Piruletas normales rojas (cajas)", "u": "CAJAS", "last": 220}, {"id": 47, "row": 51, "n": "Caramelos (cajas)", "u": "CAJAS", "last": null}, {"id": 48, "row": 52, "n": "Piruletas negras (cajas)", "u": "CAJAS", "last": null}];
+const KEY='conteo_pinto_v2';
+let S={fecha:'',vals:{},codes:{}};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+if(!S.fecha){const d=new Date();S.fecha=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+S.cpp=S.cpp||{};
+let cur=null,pending=null,filtro='todos',candidatos=null,tecladoOn=false;
+const $=id=>document.getElementById(id);
+const byId=id=>ITEMS.find(x=>x.id===id);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function warn(it,v){return it.last!=null&&v!==undefined&&Math.abs(v-it.last)>=5&&Math.abs(v-it.last)/Math.max(it.last,1)>=0.5}
+
+function render(){
+ const L=$('lista');L.innerHTML='';
+ const t=norm($('busca').value.trim());
+ ITEMS.forEach(it=>{
+  const v=S.vals[it.id];
+  if(filtro==='faltan'&&v!==undefined)return;
+  if(filtro==='hechos'&&v===undefined)return;
+  if(candidatos&&!candidatos.includes(it.id))return;
+  if(!candidatos&&t&&!norm(it.n).includes(t))return;
+  const d=document.createElement('div');
+  d.className='it'+(v!==undefined?' done':'')+(warn(it,v)?' warn':'')+(cur===it.id?' sel':'')+(pending?' pend':'');
+  d.innerHTML='<div class="l"><div class="t"></div><div class="s"><span class="tag"></span><span class="u"></span></div></div><div class="val"></div>';
+  d.querySelector('.t').textContent=it.n;
+  d.querySelector('.tag').textContent=it.u;
+  d.querySelector('.u').innerHTML=(it.last==null?'sin conteo previo':'último: '+it.last)+(warn(it,v)?' · <b>revisa</b>':'');
+  d.querySelector('.val').textContent=v!==undefined?v:'—';
+  d.addEventListener('click',()=>elegir(it.id,true));
+  L.appendChild(d);
+ });
+ if(!L.children.length)L.innerHTML='<div class="hint" style="text-align:center;padding:16px">Nada que mostrar con este filtro.</div>';
+ const n=Object.keys(S.vals).length;
+ $('prog').textContent=n+' de '+ITEMS.length+' contados'+(n===ITEMS.length?' · ¡completo!':' · faltan '+(ITEMS.length-n));
+ $('pb').style.width=(100*n/ITEMS.length)+'%';
+ $('ta').value=colText();
+ const nc=ITEMS.filter(it=>Object.values(S.codes).some(a=>a.includes(it.id))).length;
+ $('ncod').textContent='Códigos aprendidos en este dispositivo: '+nc+' de '+ITEMS.length+' consumibles.';
+}
+function elegir(id,desdeLista){
+ if(pending){
+  const a=S.codes[pending]||[];if(!a.includes(id))a.push(id);S.codes[pending]=a;save();
+  aviso('Código memorizado para: '+byId(id).n);pending=null;
+ }
+ cur=id;candidatos=null;$('busca').value='';
+ const it=byId(id);
+ $('cur').classList.add('on');
+ $('cnm').textContent=it.n;
+ $('cmeta').textContent='Unidad: '+it.u.toLowerCase()+' · '+(it.last==null?'sin conteo previo':'último conteo: '+it.last);
+ $('qty').value=S.vals[id]!==undefined?S.vals[id]:'';
+ $('cwarn').classList.remove('on');
+ const ig=$('igual');
+ if(it.last!=null){ig.classList.remove('hide');ig.textContent='= Igual que la última vez ('+it.last+')'}else ig.classList.add('hide');
+ const cj=$('calc');cj.open=false;cj.classList.toggle('hide',it.u!=='CAJAS');
+ $('cpal').value='';$('csue').value='';$('ccpp').value=S.cpp[id]||'';$('cres').textContent='';
+ render();
+ $('qty').focus();$('qty').select();
+ if(desdeLista)window.scrollTo({top:0,behavior:'smooth'});
+}
+function aviso(m,persist){const b=$('ban');if(!m){b.classList.remove('on');return}b.textContent=m;b.classList.add('on');if(!persist)setTimeout(()=>{if(!pending&&!candidatos)b.classList.remove('on')},3500)}
+function guardar(){
+ if(cur==null)return;
+ const v=$('qty').value.replace(/[^0-9]/g,'');
+ if(v===''){delete S.vals[cur]}else{S.vals[cur]=parseInt(v,10)}
+ save();
+ const it=byId(cur);
+ if(v!==''&&warn(it,S.vals[cur])){$('cwarn').textContent='Antes había '+it.last+' y ahora '+S.vals[cur]+'. Si es correcto, sigue; si no, corrígelo.';$('cwarn').classList.add('on')}
+ else{$('cwarn').classList.remove('on')}
+ render();
+ $('qty').value='';$('cur').classList.remove('on');cur=null;render();
+ $('busca').focus();
+}
+$('qty').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();guardar()}});
+$('ok').addEventListener('click',guardar);
+$('igual').addEventListener('click',()=>{const it=byId(cur);if(it&&it.last!=null){$('qty').value=it.last;guardar()}});
+function calc(){
+ const g=id=>parseInt($(id).value.replace(/[^0-9]/g,''),10)||0;
+ [ 'cpal','ccpp','csue'].forEach(id=>{$(id).value=$(id).value.replace(/[^0-9]/g,'')});
+ const p=g('cpal'),c=g('ccpp'),s=g('csue');
+ if(cur!=null&&c>0){S.cpp[cur]=c;save()}
+ if(p||s){const tot=p*c+s;$('qty').value=tot;$('cres').textContent=p+' × '+c+' + '+s+' = '+tot+' cajas'}else $('cres').textContent='';
+}
+['cpal','ccpp','csue'].forEach(id=>$(id).addEventListener('input',calc));
+['cpal','ccpp','csue'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();guardar()}}));
+
+$('busca').addEventListener('input',()=>{candidatos=null;render()});
+$('busca').addEventListener('keydown',e=>{
+ if(e.key!=='Enter')return;
+ e.preventDefault();
+ const raw=$('busca').value.trim();if(!raw)return;
+ const ids=S.codes[raw];
+ if(ids&&ids.length===1){elegir(ids[0]);return}
+ if(ids&&ids.length>1){candidatos=ids.slice();$('busca').value='';aviso('Este código lo comparten varios consumibles: elige el correcto.',true);render();return}
+ const vis=ITEMS.filter(it=>norm(it.n).includes(norm(raw)));
+ if(vis.length===1){elegir(vis[0].id);return}
+ if(vis.length===0){pending=raw;$('busca').value='';aviso('Código nuevo ('+raw+'). Toca en la lista el consumible al que corresponde y lo recordaré.',true);render()}
+});
+$('tec').addEventListener('click',()=>{tecladoOn=!tecladoOn;$('busca').setAttribute('inputmode',tecladoOn?'text':'none');$('busca').focus()});
+$('busca').setAttribute('inputmode','none');
+
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+ filtro=c.dataset.f;document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));render()}));
+
+function colText(){
+ const [y,m,d]=S.fecha.split('-');
+ const out=[d+'/'+m+'/'+y];
+ ITEMS.forEach(it=>out.push(S.vals[it.id]!==undefined?String(S.vals[it.id]):''));
+ return out.join('\n');
+}
+$('fecha').value=S.fecha;
+$('fecha').addEventListener('change',e=>{if(e.target.value){S.fecha=e.target.value;save();render()}});
+$('copia').addEventListener('click',async()=>{
+ try{await navigator.clipboard.writeText(colText());$('msg').textContent='Copiado. Ya puedes pegarlo en el Excel.'}
+ catch(e){const d=$('ta').parentElement;d.open=true;$('ta').focus();$('ta').select();$('msg').textContent='No se pudo copiar solo: el texto está seleccionado, usa Ctrl+C.'}
+});
+let conf=false;
+$('borra').addEventListener('click',()=>{
+ if(!conf){conf=true;$('borra').textContent='Pulsa otra vez para borrar el conteo';setTimeout(()=>{conf=false;$('borra').textContent='Empezar conteo nuevo'},4000);return}
+ S.vals={};save();conf=false;$('borra').textContent='Empezar conteo nuevo';cur=null;$('cur').classList.remove('on');render();$('msg').textContent='Conteo borrado (los códigos aprendidos se mantienen).';
+});
+render();
+(async()=>{
+ try{const dl=await claude.use('downloads');if(dl){const b=$('desc');b.classList.remove('hide');
+  b.addEventListener('click',async()=>{try{
+   const rows=['fila_excel;consumible;cantidad'];ITEMS.forEach(it=>rows.push([it.row,'"'+it.n.replace(/"/g,'""')+'"',S.vals[it.id]!==undefined?S.vals[it.id]:''].join(';')));
+   await dl.save({filename:'conteo_'+S.fecha+'.csv',data:'﻿'+rows.join('\n')});
+  }catch(e){$('msg').textContent='No se descargó. Usa Copiar columna.'}});}}catch(e){}
+})();
+</script></body></html>
